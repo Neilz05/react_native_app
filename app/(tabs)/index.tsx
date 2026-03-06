@@ -3,12 +3,15 @@ import { Link } from "expo-router";
 import { Image } from "expo-image";
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+
 import ImageViewer from "@/components/ImageView";
 import Button from "@/components/Button";
 import CircleButton from "@/components/CircleButton";
 import IconButton from "@/components/IconButton";
 import EmojiPicker from "@/components/EmojiPicker";
 import EmojiList from "@/components/EmojiList";
+import EmojiSticker from "@/components/EmojiSticker";
 
 const PlaceholderImage = require('@/assets/images/android-icon-monochrome.png');
 
@@ -36,11 +39,12 @@ export default function Index() {
     // TODO
   }
   return (
-    <View
+    <GestureHandlerRootView
       style={styles.container}
     >
       <View style={styles.imageContainer}>
         <ImageViewer imgSource={PlaceholderImage} selectedImage={selectedImage} />
+        {pickedEmoji && <EmojiSticker stickerSource={pickedEmoji} imageSize={40} />}
       </View>
       {showAppOptions ? (
         <View style={styles.footerContainer2}>
@@ -59,9 +63,8 @@ export default function Index() {
       )}
       <EmojiPicker isVisible={showEmojiPicker} onClose={() => setShowEmojiPicker(false)}>
         <EmojiList onSelect={setPickedEmoji} onClose={() =>setShowEmojiPicker(false)}/>
-        <Button label="hello"></Button>
       </EmojiPicker>
-      </View>
+    </GestureHandlerRootView>
   );
 }
 

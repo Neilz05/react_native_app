@@ -10,11 +10,8 @@ type Props = {
 export default function EmojiList({ onSelect, onClose } : Props) {
     const [emoji] = useState<ImageSourcePropType[]>([
         require('../assets/images/emoji1.png'),
-        // require('../assets/emoji/emoji2.png'),
-        // require('../assets/emoji/emoji3.png'),
-        // require('../assets/emoji/emoji4.png'),
-        // require('../assets/emoji/emoji5.png'),
-        // require('../assets/emoji/emoji6.png'),
+        require('../assets/images/icon.png'),
+        require('../assets/images/favicon.png'),
     ]);
     return (
         <FlatList 
