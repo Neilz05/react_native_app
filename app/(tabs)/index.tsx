@@ -1,9 +1,13 @@
-import { Text, View, StyleSheet, ImageSourcePropType} from "react-native";
+import { Text, View, StyleSheet, ImageSourcePropType, Platform} from "react-native";
 import { Link } from "expo-router";
 import { Image } from "expo-image";
 import * as ImagePicker from 'expo-image-picker';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import * as MediaLibrary from 'expo-media-library';
+import { captureRef } from 'react-native-view-shot';
+// import domtoimage from 'dom-to-image';
+var domtoimage = require('dom-to-image');
 
 import ImageViewer from "@/components/ImageView";
 import Button from "@/components/Button";
@@ -20,6 +24,11 @@ export default function Index() {
   const [showAppOptions, setShowAppOptions] = useState<boolean>(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
   const [pickedEmoji, setPickedEmoji] = useState<ImageSourcePropType | undefined>(undefined);
+  const [permissionResponse, requestPermission] = MediaLibrary.usePermissions({
+    granularPermissions: ['photo'],
+  });
+
+  const imageRef = useRef<View>(null);
 
   const pickImageAsync = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -36,13 +45,62 @@ export default function Index() {
   }
 
   const onSaveImageAsync = async () => {
-    // TODO
+    if(Platform.OS !== 'web'){
+      try {
+        if (!permissionResponse?.granted) {
+          const permission = await requestPermission();
+
+          if (!permission.granted) {
+            alert('Permission to access photos is required to save the image.');
+            return;
+          }
+        }
+
+        const localUri = await captureRef(imageRef, {
+          height: 440,
+          quality: 1,
+        });
+
+        await MediaLibrary.saveToLibraryAsync(localUri);
+        if (localUri) {
+          alert('Saved');
+        }
+      }
+      catch (e) {
+        alert ('Failed to save image. Please try again.');
+        console.log(e);
+      }
+    }
+    else {
+      try {
+        const dataUrl = await domtoimage.toJpeg(imageRef.current, {
+          quality: 1,
+          width: 320,
+          height: 440,
+        });
+
+        let link = document.createElement('a');
+        link.download = 'sticker-smash.jpeg';
+        link.href = dataUrl;
+        link.click();
+      }
+      catch (e) {
+        console.log(e);
+      }
+    }
   }
+
+  useEffect(() => {
+    if (!permissionResponse?.granted) {
+      requestPermission();
+    }
+  }, []);
+
   return (
     <GestureHandlerRootView
       style={styles.container}
     >
-      <View style={styles.imageContainer}>
+      <View ref={imageRef} style={styles.imageContainer}>
         <ImageViewer imgSource={PlaceholderImage} selectedImage={selectedImage} />
         {pickedEmoji && <EmojiSticker stickerSource={pickedEmoji} imageSize={40} />}
       </View>
@@ -51,8 +109,9 @@ export default function Index() {
           <IconButton label="Reset" icon="refresh" onPress={() => {
             setSelectedImage(undefined);
             setShowAppOptions(false);
+            setPickedEmoji(undefined);
           }} />
-          <CircleButton onPress={() => {setShowAppOptions(false); setShowEmojiPicker(true);}} />
+          <CircleButton onPress={() => {setShowEmojiPicker(true);}} />
           <IconButton label="Save" icon="save-alt" onPress={onSaveImageAsync} />
         </View>
       ) : (
